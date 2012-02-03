@@ -50,11 +50,14 @@
     //~ $files = scandir($logdir);
     //~ $files = array_filter(glob($logdir . '/*.log'),'basename');
     $files = array();
+    $times = array();
     foreach (glob($logdir . '/*.log') as $name) {
 //        if (substr($name, -1, 3) == 'log') {
             $files[] = basename($name);
+            $times[] = filemtime($name);
 //        };
     };
+    array_multisort($times, SORT_DESC, $files);
     //~ print_r($_logfile); echo "\n";
     $iserrorlog = strpos($_logfile,'error');
     if (substr($_logfile, 0, 5) == 'error')
