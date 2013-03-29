@@ -6,7 +6,7 @@ import os
 import glob
 import sqlite3
 from contextlib import closing
-from httplib import responses
+from http.client import responses
 
 LOGROOT = '/var/log/nginx'
 DATABASE = '/tmp/loglines.db'
