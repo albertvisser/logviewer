@@ -1,7 +1,8 @@
 LogViewer
 =========
 
-Originally a PHP application in an attempt to build a quick and dirty something to read my server logs from with my web browser, rebuilt in Python using several web frameworks.
+Originally a PHP application in an attempt to build a quick and dirty something to read my server logs from within my web browser, rebuilt in Python using various web frameworks.
+
 
 Requirements
 ------------
