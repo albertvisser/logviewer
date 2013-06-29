@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import sys
@@ -6,7 +5,10 @@ import os
 import glob
 import sqlite3
 from contextlib import closing
-from http.client import responses
+if sys.version < '3':
+    from httplib import responses
+else:
+    from http.client import responses
 
 LOGROOT = '/var/log/nginx'
 DATABASE = '/tmp/loglines.db'
