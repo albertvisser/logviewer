@@ -5,6 +5,18 @@ Originally a PHP application in an attempt to build a quick and dirty something 
 
 The Python version uses Sqlite for storing its settings and caching the currently selected logfile.
 
+
+How to use
+----------
+
+Use ``cherryd`` to run ``start_logviewer.py`` with the .conf file in this
+directory.
+In this configuration define the output to go to a specific port on localhost.
+Configure your local webserver to pick up the output from the port and assign it
+to a virtual domain. Have your hosts file translate the virtual domain to localhost.
+Of course you can also pick up the output directly in the web browser by specifying
+localhost:port.
+
 Requirements
 ------------
 
