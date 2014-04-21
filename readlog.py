@@ -147,9 +147,16 @@ def showerror(text):
     for item in errortypes:
         if item in text:
             date, data = text.split(item)
-            error = item
+            # add error type back to message
+            error = item[1:-1]
+            data = error + data
             break
     if not date:
+        # regular cherrypy error log lines start with the date between square brackets
+        test = text.split('] ', 1)
+        if len(test) == 2 and test[0].startswith('['):
+            date, text = test
+            date = date[1:]
         data = text
     if ', client' in data:
         data, client = data.split(', client')
