@@ -12,9 +12,7 @@ os.chdir(ROOT)
 sys.path.insert(0, ROOT)
 from viewlogs_cherry import Logviewer
 
-
-cherrypy.config.update({'environment': 'embedded'})
-
 application = cherrypy.tree.mount(Logviewer())
+cherrypy.config.update({'environment': 'embedded'})
 cherrypy.config.update({'engine.autoreload_on': False,
         })
