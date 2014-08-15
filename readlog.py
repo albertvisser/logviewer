@@ -43,14 +43,19 @@ def init_db():
 def rereadlog(logfile, entries, order):
     """read the designated logfile and store in temporary database
     """
+    old_logfile, old_entries, old_order = logfile, entries, order
     with closing(connect_db()) as db:
         cur = db.cursor()
-        data = cur.execute('SELECT logfile, entries, ordering FROM parms '
-            'where id == 1')
-        for row in data:
-            old_logfile, old_entries, old_order = row
-            break
-    if logfile == old_logfile and entries == old_entries and ordering == old_ordering:
+        try:
+            data = cur.execute('SELECT logfile, entries, ordering FROM parms '
+                'where id == 1')
+        except sqlite3.OperationalError:
+            init_db()
+        else:
+            for row in data:
+                old_logfile, old_entries, old_order = row
+                break
+    if logfile == old_logfile and entries == old_entries and order == old_order:
         return
     with closing(connect_db()) as db:
         cur = db.cursor()
@@ -88,57 +93,66 @@ def rereadlog(logfile, entries, order):
             db.commit()
 
 def get_data(position='first'):
+    outdict = {
+        'loglist': listlogs(),
+        'logfile': '',
+        'order': '',
+        'errorlog': False,
+        'numentries': ('5','10','15','20','25','30'),
+        'entries': '',
+        'mld': '',
+        'logdata': [],
+        }
     with closing(connect_db()) as db:
-        outdict = {'loglist': listlogs()}
         cur = db.cursor()
-        data = cur.execute('SELECT logfile, entries, current, total, ordering, mld '
-            'FROM parms where id == 1')
-        for row in data:
-            logfile, entries, current, total, order, mld = row
-            break
-        is_errorlog = True if 'error' in logfile else False
-        outdict['logfile'] = logfile
-        outdict['order'] = order
-        outdict['errorlog'] = is_errorlog
-        outdict['numentries'] = ('5','10','15','20','25','30')
-        outdict['entries'] = str(entries)
-        outdict['mld'] = mld
-        # bij de allereerste aanroep is er nog geen  logfile ingevuld en mag het scherm leeg blijven
-        outdict['logdata'] =  []
-
-        if position == 'first':
-            current = 1
-        elif position == 'prev':
-            newtop = current - entries
-            if newtop > 0:
-                current = newtop
-            else:
-                outdict['mld'] = 'Geen vorige pagina'
-        elif position == 'next':
-            newtop = current + entries
-            if newtop <= total:
-                current = newtop
-            else:
-                outdict['mld'] = 'Geen volgende pagina'
-        elif position == 'last':
-            current = int(total / entries) * entries + 1
-        cur.execute('UPDATE parms SET current = ? WHERE id == 1', (current,))
-        db.commit()
-
-        if logfile:
-            lines = cur.execute('SELECT line FROM log '
-                'WHERE id BETWEEN {} and {}'.format(current, current + entries - 1))
-            for line in lines:
-                if is_errorlog:
-                    parts = showerror(line[0])
-                    # '<td><textarea style="font-size: 8pt" rows="4" cols="25">'.$r["date"].'</textarea></td><td><textarea style="font-size: 8pt" rows="4" cols="70">'.$r["data"].'</textarea></td><td><textarea style="font-size: 8pt" rows="4" cols="35">'.$r["referer"].' from'.$r["client"].'</textarea></td>';
+        try:
+            data = cur.execute('SELECT logfile, entries, current, total, ordering, '
+                'mld FROM parms where id == 1')
+        except sqlite3.OperationalError:
+            init_db()
+            outdict['mld'] = 'No data available, try refreshing the display'
+        else:
+            for row in data:
+                logfile, entries, current, total, order, mld = row
+                break
+            is_errorlog = True if 'error' in logfile else False
+            outdict['logfile'] = logfile
+            outdict['order'] = order
+            outdict['errorlog'] = is_errorlog
+            outdict['entries'] = str(entries)
+            outdict['mld'] = mld
+            if position == 'first':
+                current = 1
+            elif position == 'prev':
+                newtop = current - entries
+                if newtop > 0:
+                    current = newtop
                 else:
-                    parts = showaccess(line[0])
-                    # '<td><textarea font-size: 8pt" rows="4" cols="25">'.$r["date"].'</textarea></td><td><textarea font-size: 8pt" rows="4" cols="60">'.$r["data"].'</textarea></td><td><textarea font-size: 8pt" rows="4" cols="25">'.$r["client"].'</textarea></td>';
-                outdict['logdata'].append(parts)
-        start = len(outdict['logdata'])
-        for i in range(start, entries):
-            outdict['logdata'].append({'client': '', 'date': '', 'data': ''})
+                    outdict['mld'] = 'Geen vorige pagina'
+            elif position == 'next':
+                newtop = current + entries
+                if newtop <= total:
+                    current = newtop
+                else:
+                    outdict['mld'] = 'Geen volgende pagina'
+            elif position == 'last':
+                current = int(total / entries) * entries + 1
+            cur.execute('UPDATE parms SET current = ? WHERE id == 1', (current,))
+            db.commit()
+
+            if logfile:
+                lines = cur.execute('SELECT line FROM log '
+                    'WHERE id BETWEEN {} and {}'.format(current,
+                        current + entries - 1))
+                for line in lines:
+                    if is_errorlog:
+                        parts = showerror(line[0])
+                    else:
+                        parts = showaccess(line[0])
+                    outdict['logdata'].append(parts)
+            start = len(outdict['logdata'])
+            for i in range(start, entries):
+                outdict['logdata'].append({'client': '', 'date': '', 'data': ''})
     return outdict
 
 def showerror(text):
