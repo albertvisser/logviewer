@@ -6,12 +6,13 @@
             document.getElementById('top_line').value = x;
         }
     </script>
+    <link rel="stylesheet" type="text/css" href="/static/viewlogs.css" />
 </head>
-<body> <!-- style="color: white; background-color: black"> -->
-    <!-- <div style="colour: black; background-color: orange"><h2>Albert's Simple Log Viewer</h2></div> -->
+<body>
+    <h2>Albert's Simple Log Viewer</h2>
     <form action="/" method='get'>
     <div>
-        <span style="float: left; width:20%">Kies een log bestand:</span>
+        <span class="caption-left">Kies een log bestand:</span>
         <span>
             <select name="logfile" id="logfile" onchange="submit()">
             {% for dir in logdirs %}
@@ -29,7 +30,7 @@
         </span>
     </div>
     <div>
-        <span style="float: left; width:20%">Aantal entries per pagina:</span>
+        <span class="caption-left">Aantal entries per pagina:</span>
         <span>
             <select name="entries" id="entries" onchange="submit()">
             {% for num in numentries %}
@@ -38,7 +39,7 @@
                 >{{ num }}</option>
             </select>
         </span>
-        <span style="padding-left: 212px">Volgorde:</span>
+        <span class="caption-middle">Volgorde:</span>
         <span>
             <input type="radio" name="order" value="desc" onclick="settop('refresh');submit()"
             {% if order == "desc" %}checked="checked"{% endif %}
@@ -48,7 +49,7 @@
             />&nbsp;nieuwste laatst&nbsp;
         </span>
     </div>
-    <div style="text-align: center">{{mld}}&nbsp;</div>
+    <div class="center">{{mld}}&nbsp;</div>
     <div>
         <table>
             <tr>
@@ -58,23 +59,23 @@
             <tr>
                 {% if errorlog %}
                 <td>
-                <textarea style="font-size: 8pt" rows="2" cols="25">{{data.date}}</textarea>
+                <textarea class="data" rows="2" cols="25">{{data.date}}</textarea>
                 </td>
                 <td>
-                <textarea style="font-size: 8pt" rows="2" cols="70">{{data.data}}</textarea>
+                <textarea class="data" rows="2" cols="70">{{data.data}}</textarea>
                 </td>
                 <td>
-                <textarea style="font-size: 8pt" rows="2" cols="35">{{data.referer}} from {{data.client}}</textarea>
+                <textarea class="data" rows="2" cols="35">{{data.referer}} from {{data.client}}</textarea>
                 </td>
                 {% else %}
                 <td>
-                <textarea style ="font-size: 8pt" rows="2" cols="25">{{data.date}}</textarea>
+                <textarea class="data" rows="2" cols="25">{{data.date}}</textarea>
                 </td>
                 <td>
-                <textarea style="font-size: 8pt" rows="2" cols="60">{{data.data}}</textarea>
+                <textarea class="data" rows="2" cols="60">{{data.data}}</textarea>
                 </td>
                 <td>
-                <textarea style="font-size: 8pt" rows="2" cols="25">{{data.client}}</textarea>
+                <textarea class="data" rows="2" cols="25">{{data.client}}</textarea>
                 </td>
                 {% endif %}
             </tr>

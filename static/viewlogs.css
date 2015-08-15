@@ -1,0 +1,6 @@
+ body { background-color: #C6E2FF; color: #3a5fcd }
+ h2 { color: #c6e2ff; background-color: #3a5fcd }
+ .caption-left { float: left; width:20% }
+.caption-middle { padding-left: 212px }
+.center { text-align: center }
+.data { font-size: 8pt; background-color: #f6fafd }
