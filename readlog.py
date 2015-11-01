@@ -31,6 +31,7 @@ def init_db():
     with closing(connect_db()) as db:
         cur = db.cursor()
         cur.execute('DROP TABLE IF EXISTS parms;')
+        db.commit()
         cur.execute('CREATE TABLE parms (id INTEGER PRIMARY KEY, '
             'logfile STRING NOT NULL, entries INTEGER NOT NULL, '
             'current INTEGER NOT NULL, total INTEGER NOT NULL, '
