@@ -9,9 +9,17 @@ if sys.version < '3':
     from httplib import responses
 else:
     from http.client import responses
+# extra Nginx status codes
+responses.update({
+    444: 'No Response From Server',
+    494: 'Request Header Too Large',
+    495: 'SSL Certificate Error',
+    496: 'SSL Certificate Required',
+    497: 'HTTP Request Sent to HTTPS Port',
+    499: 'Client Closed Request'})
 
 LOGROOT = '/var/log/nginx'
-DATABASE = '/tmp/loglines.db'
+DATABASE = '/tmp/loglines_{}.db'
 
 def listlogs():
     "bouw een lijst op van logfiles, meest recent aangepaste het eerst"
@@ -22,16 +30,16 @@ def listlogs():
     lijst.reverse()
     return [x[1] for x in lijst]
 
-def connect_db():
-    return sqlite3.connect(DATABASE)
+def connect_db(timestr):
+    return sqlite3.connect(DATABASE.format(timestr))
 
-def init_db():
+def init_db(timestr):
     """initialiseer de tabel met sessieparameters
     """
-    with closing(connect_db()) as db:
+    with closing(connect_db(timestr)) as db:
         cur = db.cursor()
         cur.execute('DROP TABLE IF EXISTS parms;')
-        db.commit()
+        ## db.commit()
         cur.execute('CREATE TABLE parms (id INTEGER PRIMARY KEY, '
             'logfile STRING NOT NULL, entries INTEGER NOT NULL, '
             'current INTEGER NOT NULL, total INTEGER NOT NULL, '
@@ -41,24 +49,24 @@ def init_db():
             0, 0, 'desc', ''))
         db.commit()
 
-def rereadlog(logfile, entries, order):
+def rereadlog(logfile, entries, order, timestr):
     """read the designated logfile and store in temporary database
     """
     old_logfile, old_entries, old_order = logfile, entries, order
-    with closing(connect_db()) as db:
+    with closing(connect_db(timestr)) as db:
         cur = db.cursor()
         try:
             data = cur.execute('SELECT logfile, entries, ordering FROM parms '
                 'where id == 1')
         except sqlite3.OperationalError:
-            init_db()
+            init_db(timestr)
         else:
             for row in data:
                 old_logfile, old_entries, old_order = row
                 break
     if logfile == old_logfile and entries == old_entries and order == old_order:
         return
-    with closing(connect_db()) as db:
+    with closing(connect_db(timestr)) as db:
         cur = db.cursor()
         cur.execute('UPDATE parms SET logfile = ?, entries = ? , ordering = ? '
             'WHERE id == 1', (logfile, entries, order))
@@ -67,7 +75,7 @@ def rereadlog(logfile, entries, order):
     with open(fnaam) as _in:
         data = _in.readlines()
     total = len(data)
-    with closing(connect_db()) as db:
+    with closing(connect_db(timestr)) as db:
         cur = db.cursor()
         parms = cur.execute('SELECT ordering FROM parms where id == 1')
         for row in parms:
@@ -93,7 +101,7 @@ def rereadlog(logfile, entries, order):
             cur.execute('UPDATE parms SET total = ? WHERE id == 1', (total,))
             db.commit()
 
-def get_data(position='first'):
+def get_data(timestr, position='first'):
     outdict = {
         'loglist': listlogs(),
         'logfile': '',
@@ -103,14 +111,15 @@ def get_data(position='first'):
         'entries': '',
         'mld': '',
         'logdata': [],
+        'timestr': timestr,
         }
-    with closing(connect_db()) as db:
+    with closing(connect_db(timestr)) as db:
         cur = db.cursor()
         try:
             data = cur.execute('SELECT logfile, entries, current, total, ordering, '
                 'mld FROM parms where id == 1')
         except sqlite3.OperationalError:
-            init_db()
+            init_db(timestr)
             outdict['mld'] = 'No data available, try refreshing the display'
         else:
             for row in data:
@@ -181,20 +190,25 @@ def showerror(text):
 
 def showaccess(text):
     parts = {'client': '', 'date': '', 'data': ''}
-    parsed = text.split(' -', 2)
+    parsed = text.split(' -', 2)    # client, date, data
     parts['client'] = parsed[0]
-    if len(parsed) > 1:
-        parsed = parsed[-1].split(' [',1)
-        if len(parsed) > 1:
-            parsed = parsed[1].split('] "', 1)
-            parts['date'] = parsed[0]
-            if len(parsed) > 1:
-                parsed = parsed[1].split('" ', 1)
-                data = parsed[0]
-                if len(parsed) > 1:
-                    parsed = parsed[1].split(' ', 1)
-                    parts['data'] = '{} {}: {}'.format(parsed[0],
-                        responses[int(parsed[0])], data)
-                else:
-                    parts['data'] = data
+    if len(parsed) < 2:
+        return parts
+    parsed = parsed[-1].split(' [',1)   # strip off opening bracket for date
+    if len(parsed) < 2:
+        return parts
+    parsed = parsed[1].split('] "', 1) # date, data
+    parts['date'] = parsed[0]
+    if len(parsed) < 2:
+        return parts
+    parsed = parsed[1].split('" ', 1)
+    if len(parsed) < 2:
+        return parts
+    command = parsed[0] # verb address protocol = command.split()
+    parsed = parsed[1].split(' ', 1)
+    try:
+        text = responses[int(parsed[0])]
+    except KeyError:
+        text = 'unknown status'
+    parts['data'] = '{} {}: {}'.format(parsed[0], text, command)
     return parts

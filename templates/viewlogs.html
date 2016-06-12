@@ -11,14 +11,15 @@
         <span>
             <select name="logfile" id="logfile" onchange="submit()">
             {% for dir in loglist %}
-                <option
-                {% if dir == logfile %} selected="selected"{% endif %}
-                >{{ dir }}</option>
+                <option {% if dir == logfile %} selected="selected"{% endif %} >
+                    {{ dir }}
+                </option>
             {% endfor %}
             </select>
         </span>
         <span>
             <input type="submit" value="verversen" />
+            <input name="timestr" type="hidden" value="{{ timestr }}"/>
             <a href="/top" title="eerste pagina"><input type="button" value="begin" /></a>
             <a href="/prev" title="vorige pagina"><input type="button" value="vorige" /></a>
             <a href="/next" title="volgende pagina"><input type="button" value="volgende" /></a>
