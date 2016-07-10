@@ -14,9 +14,6 @@ class Logviewer(object):
 
     @cherrypy.expose
     def index(self, logfile='', entries='', order='', timestr=''):
-        ## logfile = request.GET.get('logfile', '')
-        ## entries = request.GET.get('entries', '')
-        ## order = request.GET.get('order', '')
         if not logfile:
             timestr = str(int(time.time() * 10))
             init_db(timestr)
@@ -41,18 +38,6 @@ class Logviewer(object):
     @cherrypy.expose
     def bottom(self):
         return tmpl.render(**get_data(self.timestr, 'last'))
-
-    ## @cherrypy.expose
-    ## def help(self):
-        ## return static_file('help.html', root='.')
-
-    ## @error(403)
-    ## def mistake403(code):
-        ## return 'The parameter you passed has the wrong format.'
-
-    ## @error(404)
-    ## def mistake404(code):
-        ## return 'Sorry, this page does not exist.'
 
 if __name__ == '__main__':
     cherrypy.quickstart(Logviewer())
