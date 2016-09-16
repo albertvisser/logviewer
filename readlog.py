@@ -74,6 +74,9 @@ def rereadlog(logfile, entries, order, timestr):
     fnaam = os.path.join(LOGROOT, logfile)
     with open(fnaam) as _in:
         data = _in.readlines()
+    if not data:
+        with open(fnaam + '.1') as _in:
+            data = _in.readlines()
     total = len(data)
     with closing(connect_db(timestr)) as db:
         cur = db.cursor()
