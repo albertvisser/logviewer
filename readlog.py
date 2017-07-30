@@ -1,28 +1,29 @@
 # -*- coding: utf-8 -*-
-
-import sys
+"""Helper functions for LogViewer
+"""
 import os
 import glob
 import sqlite3
 from contextlib import closing
-if sys.version < '3':
-    from httplib import responses
-else:
+try:
     from http.client import responses
-# extra Nginx status codes
-responses.update({
-    444: 'No Response From Server',
-    494: 'Request Header Too Large',
-    495: 'SSL Certificate Error',
-    496: 'SSL Certificate Required',
-    497: 'HTTP Request Sent to HTTPS Port',
-    499: 'Client Closed Request'})
+except ImportError:
+    from httplib import responses
 
 LOGROOT = '/var/log/nginx'
 DATABASE = '/tmp/loglines_{}.db'
+# extra Nginx status codes
+responses.update({444: 'No Response From Server',
+                  494: 'Request Header Too Large',
+                  495: 'SSL Certificate Error',
+                  496: 'SSL Certificate Required',
+                  497: 'HTTP Request Sent to HTTPS Port',
+                  499: 'Client Closed Request'})
+
 
 def listlogs():
-    "bouw een lijst op van logfiles, meest recent aangepaste het eerst"
+    """bouw een lijst op van logfiles, meest recent aangepaste het eerst
+    """
     lijst = []
     for item in glob.glob(os.path.join(LOGROOT, '*.log')):
         lijst.append((os.path.getctime(item), os.path.basename(item)))
@@ -30,8 +31,12 @@ def listlogs():
     lijst.reverse()
     return [x[1] for x in lijst]
 
+
 def connect_db(timestr):
+    """get a connection to the database
+    """
     return sqlite3.connect(DATABASE.format(timestr))
+
 
 def init_db(timestr):
     """initialiseer de tabel met sessieparameters
@@ -41,13 +46,14 @@ def init_db(timestr):
         cur.execute('DROP TABLE IF EXISTS parms;')
         ## db.commit()
         cur.execute('CREATE TABLE parms (id INTEGER PRIMARY KEY, '
-            'logfile STRING NOT NULL, entries INTEGER NOT NULL, '
-            'current INTEGER NOT NULL, total INTEGER NOT NULL, '
-            'ordering STRING NOT NULL, mld STRING NOT NULL);')
+                    'logfile STRING NOT NULL, entries INTEGER NOT NULL, '
+                    'current INTEGER NOT NULL, total INTEGER NOT NULL, '
+                    'ordering STRING NOT NULL, mld STRING NOT NULL);')
         db.commit()
         cur.execute('INSERT INTO parms VALUES (?, ?, ?, ?, ?, ?, ?)', (1, '', 10,
-            0, 0, 'desc', ''))
+                                                                       0, 0, 'desc', ''))
         db.commit()
+
 
 def rereadlog(logfile, entries, order, timestr):
     """read the designated logfile and store in temporary database
@@ -57,7 +63,7 @@ def rereadlog(logfile, entries, order, timestr):
         cur = db.cursor()
         try:
             data = cur.execute('SELECT logfile, entries, ordering FROM parms '
-                'where id == 1')
+                               'where id == 1')
         except sqlite3.OperationalError:
             init_db(timestr)
         else:
@@ -69,7 +75,7 @@ def rereadlog(logfile, entries, order, timestr):
     with closing(connect_db(timestr)) as db:
         cur = db.cursor()
         cur.execute('UPDATE parms SET logfile = ?, entries = ? , ordering = ? '
-            'WHERE id == 1', (logfile, entries, order))
+                    'WHERE id == 1', (logfile, entries, order))
         db.commit()
     fnaam = os.path.join(LOGROOT, logfile)
     with open(fnaam) as _in:
@@ -86,10 +92,10 @@ def rereadlog(logfile, entries, order, timestr):
             break
         cur.execute('DROP TABLE IF EXISTS log;')
         cur.execute('CREATE TABLE log (id INTEGER PRIMARY KEY, '
-            'line varchar(1000) NOT NULL);')
+                    'line varchar(1000) NOT NULL);')
         db.commit()
         if order == 'desc':
-             data.reverse()
+            data.reverse()
         for ix, line in enumerate(data):
             cur.execute('INSERT INTO log VALUES (?, ?)', (ix + 1, line))
         db.commit()
@@ -99,28 +105,29 @@ def rereadlog(logfile, entries, order, timestr):
             break
         if check != total:
             raise ValueError('Waarom dit verschil tussen {} and {}?'.format(total,
-                check))
+                                                                            check))
         else:
             cur.execute('UPDATE parms SET total = ? WHERE id == 1', (total,))
             db.commit()
 
+
 def get_data(timestr, position='first'):
-    outdict = {
-        'loglist': listlogs(),
-        'logfile': '',
-        'order': '',
-        'errorlog': False,
-        'numentries': ('5','10','15','20','25','30'),
-        'entries': '',
-        'mld': '',
-        'logdata': [],
-        'timestr': timestr,
-        }
+    """get a batch of lines from the collection of log lines
+    """
+    outdict = {'loglist': listlogs(),
+               'logfile': '',
+               'order': '',
+               'errorlog': False,
+               'numentries': ('5', '10', '15', '20', '25', '30'),
+               'entries': '',
+               'mld': '',
+               'logdata': [],
+               'timestr': timestr}
     with closing(connect_db(timestr)) as db:
         cur = db.cursor()
         try:
             data = cur.execute('SELECT logfile, entries, current, total, ordering, '
-                'mld FROM parms where id == 1')
+                               'mld FROM parms where id == 1')
         except sqlite3.OperationalError:
             init_db(timestr)
             outdict['mld'] = 'No data available, try refreshing the display'
@@ -154,9 +161,8 @@ def get_data(timestr, position='first'):
             db.commit()
 
             if logfile:
-                lines = cur.execute('SELECT line FROM log '
-                    'WHERE id BETWEEN {} and {}'.format(current,
-                        current + entries - 1))
+                lines = cur.execute('SELECT line FROM log WHERE id BETWEEN'
+                                    '{} and {}'.format(current, current + entries - 1))
                 for line in lines:
                     if is_errorlog:
                         parts = showerror(line[0])
@@ -168,7 +174,10 @@ def get_data(timestr, position='first'):
                 outdict['logdata'].append({'client': '', 'date': '', 'data': ''})
     return outdict
 
+
 def showerror(text):
+    """format a line from an error log
+    """
     errortypes = ('[notice]', '[error]')
     client, date, data = '', '', ''
     for item in errortypes:
@@ -191,23 +200,26 @@ def showerror(text):
     parts = {"client": client, "date": date, "data": data}
     return parts
 
+
 def showaccess(text):
+    """format a line from an access log
+    """
     parts = {'client': '', 'date': '', 'data': ''}
     parsed = text.split(' -', 2)    # client, date, data
     parts['client'] = parsed[0]
     if len(parsed) < 2:
         return parts
-    parsed = parsed[-1].split(' [',1)   # strip off opening bracket for date
+    parsed = parsed[-1].split(' [', 1)  # strip off opening bracket for date
     if len(parsed) < 2:
         return parts
-    parsed = parsed[1].split('] "', 1) # date, data
+    parsed = parsed[1].split('] "', 1)  # date, data
     parts['date'] = parsed[0]
     if len(parsed) < 2:
         return parts
     parsed = parsed[1].split('" ', 1)
     if len(parsed) < 2:
         return parts
-    command = parsed[0] # verb address protocol = command.split()
+    command = parsed[0]  # verb address protocol = command.split()
     parsed = parsed[1].split(' ', 1)
     try:
         text = responses[int(parsed[0])]

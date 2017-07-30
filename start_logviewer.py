@@ -1,18 +1,18 @@
 #! /usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""start Logviewer web application
+"""
 import sys
 import os
-#sys.stdout = sys.stderr
+# sys.stdout = sys.stderr
 import cgitb
-cgitb.enable()
 import cherrypy
+from viewlogs_cherry import Logviewer
+cgitb.enable()
 
-ROOT = os.path.dirname(os.path.abspath(__file__)) # '/home/albert/logviewer'
+ROOT = os.path.dirname(os.path.abspath(__file__))  # '/home/albert/logviewer'
 os.chdir(ROOT)
 sys.path.insert(0, ROOT)
-from viewlogs_cherry import Logviewer
 
 application = cherrypy.tree.mount(Logviewer())
 cherrypy.config.update({'environment': 'embedded'})
-cherrypy.config.update({'engine.autoreload_on': False,
-        })
+cherrypy.config.update({'engine.autoreload_on': False})
