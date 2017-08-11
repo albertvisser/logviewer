@@ -161,8 +161,8 @@ def get_data(timestr, position='first'):
             db.commit()
 
             if logfile:
-                lines = cur.execute('SELECT line FROM log WHERE id BETWEEN'
-                                    '{} and {}'.format(current, current + entries - 1))
+                lines = cur.execute('SELECT line FROM log WHERE id BETWEEN {} '
+                                    'and {}'.format(current, current + entries - 1))
                 for line in lines:
                     if is_errorlog:
                         parts = showerror(line[0])
