@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """LogViewer Flask version
 """
-import os
+import pathlib
 from flask import Flask, request, render_template
 app = Flask(__name__)
 import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, pathlib.Path(__file__).parent.resolve())
 from readlog import init_db, rereadlog, get_data
 
 timestr = str(int(time.time() * 10))

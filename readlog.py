@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Helper functions for LogViewer
 """
-import os
-import glob
+## import os
+## import glob
+import pathlib
 import sqlite3
 from contextlib import closing
 try:
@@ -25,8 +26,10 @@ def listlogs():
     """bouw een lijst op van logfiles, meest recent aangepaste het eerst
     """
     lijst = []
-    for item in glob.glob(os.path.join(LOGROOT, '*.log')):
-        lijst.append((os.path.getctime(item), os.path.basename(item)))
+    ## for item in glob.glob(os.path.join(LOGROOT, '*.log')):
+    for item in (x for x in pathlib.Path(LOGROOT).iterdir() if x.suffix == '*.log'):
+        ## lijst.append((os.path.getctime(item), os.path.basename(item)))
+        lijst.append((item.stat.st_ctime, item.name))
     lijst.sort()
     lijst.reverse()
     return [x[1] for x in lijst]
@@ -77,11 +80,13 @@ def rereadlog(logfile, entries, order, timestr):
         cur.execute('UPDATE parms SET logfile = ?, entries = ? , ordering = ? '
                     'WHERE id == 1', (logfile, entries, order))
         db.commit()
-    fnaam = os.path.join(LOGROOT, logfile)
-    with open(fnaam) as _in:
+    ## fnaam = os.path.join(LOGROOT, logfile)
+    ## with open(fnaam) as _in:
+    with pathlib.Path(LOGROOT / logfile).open() as _in:
         data = _in.readlines()
     if not data:
-        with open(fnaam + '.1') as _in:
+        ## with open(fnaam + '.1') as _in:
+        with pathlib.Path(LOGROOT / logfile + '.1').open() as _in:
             data = _in.readlines()
     total = len(data)
     with closing(connect_db(timestr)) as db:
