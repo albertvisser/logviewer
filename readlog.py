@@ -27,9 +27,9 @@ def listlogs():
     """
     lijst = []
     ## for item in glob.glob(os.path.join(LOGROOT, '*.log')):
-    for item in (x for x in pathlib.Path(LOGROOT).iterdir() if x.suffix == '*.log'):
+    for item in (x for x in pathlib.Path(LOGROOT).iterdir() if x.suffix == '.log'):
         ## lijst.append((os.path.getctime(item), os.path.basename(item)))
-        lijst.append((item.stat.st_ctime, item.name))
+        lijst.append((item.stat().st_ctime, item.name))
     lijst.sort()
     lijst.reverse()
     return [x[1] for x in lijst]
@@ -82,7 +82,7 @@ def rereadlog(logfile, entries, order, timestr):
         db.commit()
     ## fnaam = os.path.join(LOGROOT, logfile)
     ## with open(fnaam) as _in:
-    with pathlib.Path(LOGROOT / logfile).open() as _in:
+    with (pathlib.Path(LOGROOT) / logfile).open() as _in:
         data = _in.readlines()
     if not data:
         ## with open(fnaam + '.1') as _in:
