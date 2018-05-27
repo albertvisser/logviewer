@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """LogViewer Bottle version
 """
+import sys
+import time
 import pathlib
 from bottle import route, run, debug, template, request, static_file  # , validate, error
-import sys
-sys.path.insert(0, pathlib.Path(__file__).parent.resolve()
+sys.path.insert(0, pathlib.Path(__file__).parent.resolve())
 from readlog import init_db, rereadlog, get_data
 
 timestr = str(int(time.time() * 10))

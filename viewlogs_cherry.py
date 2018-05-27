@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """LogViewer CherryPy version
 """
-import pathlib
+import sys
 import time
+import pathlib
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
-import sys
 sys.path.insert(0, pathlib.Path(__file__).parent.resolve())
 from readlog import init_db, rereadlog, get_data
 
