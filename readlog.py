@@ -86,8 +86,11 @@ def rereadlog(logfile, entries, order, timestr):
         data = _in.readlines()
     if not data:
         ## with open(fnaam + '.1') as _in:
-        with pathlib.Path(LOGROOT / logfile + '.1').open() as _in:
-            data = _in.readlines()
+        try:
+            with (pathlib.Path(LOGROOT) / (logfile + '.1')).open() as _in:
+                data = _in.readlines()
+        except FileNotFoundError:  # no prior log generation found
+            pass
     total = len(data)
     with closing(connect_db(timestr)) as db:
         cur = db.cursor()
