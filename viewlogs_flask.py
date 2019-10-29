@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """LogViewer Flask version
 """
-import os
+import sys
+import time
+import pathlib
 from flask import Flask, request, render_template
 app = Flask(__name__)
-import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, pathlib.Path(__file__).parent.resolve())
 from readlog import init_db, rereadlog, get_data
 
 timestr = str(int(time.time() * 10))
@@ -15,8 +16,6 @@ timestr = str(int(time.time() * 10))
 def logviewer():
     """load a log file and display a first page
     """
-    ## if request:
-        ## app.logger.debug('We have a request: {}'.format(str(request.args.__dict__)))
     logfile = request.args.get('logfile', '')
     entries = request.args.get('entries', '')
     order = request.args.get('order', '')
