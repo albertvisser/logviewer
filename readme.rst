@@ -23,7 +23,6 @@ localhost:port.
 Requirements
 ------------
 
-- PHP for the old version
-- Python for the new version
+- Python (with Sqlite) 
 - CherryPy and Jinja2 for the current version
 - Bottle and Flask for other Python versions
