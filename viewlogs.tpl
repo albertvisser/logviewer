@@ -1,9 +1,23 @@
 <html>
 <head>
     <title>Albert's Simple Log Viewer</title>
+    <script type="text/javascript">
+        function settop(x) {
+            document.getElementById('top_line').value = x;
+        }
+    </script>
+    <style> body { background-color: #C6E2FF; color: #3a5fcd }
+ h2 { color: #c6e2ff; background-color: #3a5fcd }
+ .caption-left { float: left; width:20% }
+.caption-middle { padding-left: 212px }
+.center { text-align: center }
+.data { font-size: 8pt; background-color: #f6fafd }
+ </style>
 </head>
-<body style="color: white; background-color: black">
-    <!-- <div style="colour: black; background-color: orange"><h2>Albert's Simple Log Viewer</h2></div> -->
+<body>
+    <!-- style="color: white; background-color: black"> -->
+    <!-- <div style="colour: black; background-color: orange"></div> -->
+    <h2><a href="/">Albert's Simple Log Viewer</a></h2>
     <form action="/" method='get'>
     <div>
         <span style="float: left; width:20%">Kies een log bestand:</span>
@@ -41,12 +55,12 @@
         </span>
         <span style="padding-left: 212px">Volgorde:</span>
         <span>
-            <input type="radio" name="order" value="desc" onclick="submit()"
+            <input type="radio" name="order" value="desc" onclick="settop('refresh');submit()"
             %if order == "desc":
                 checked="checked"
             %end
             />&nbsp;nieuwste eerst&nbsp;
-            <input type="radio" name="order" value="asc" onclick="submit()"
+            <input type="radio" name="order" value="asc" onclick="settop('refresh');submit()"
             %if order == "asc":
                 checked="checked"
             %end

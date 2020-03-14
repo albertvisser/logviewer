@@ -1,10 +1,15 @@
 <html>
 <head>
     <title>Albert's Simple Log Viewer</title>
+    <script type="text/javascript">
+        function settop(x) {
+            document.getElementById('top_line').value = x;
+        }
+    </script>
     <link rel="stylesheet" type="text/css" href="static/viewlogs.css" />
 </head>
 <body>
-    <h2>Albert's Simple Log Viewer</h2>
+    <h2><a href='/'>Albert's Simple Log Viewer</a></h2>
     <form action="/" method='get'>
     <div>
         <span class="caption-left">Kies een log bestand:</span>
@@ -63,7 +68,7 @@
                 <textarea class="data" rows="2" cols="70">{{data.data}}</textarea>
                 </td>
                 <td>
-                <textarea class="data" rows="2" cols="35">{{data.client}}</textarea>
+		<textarea class="data" rows="2" cols="35">{{data.referer}} from {{data.client}}</textarea>
                 </td>
                 {% else %}
                 <td>
