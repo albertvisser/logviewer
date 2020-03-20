@@ -4,6 +4,7 @@
 ## import os
 ## import glob
 import pathlib
+import datetime
 import sqlite3
 from contextlib import closing
 try:
@@ -58,6 +59,27 @@ def init_db(timestr):
         db.commit()
 
 
+def startswith_date(line):
+    """return True if logline starts with a valid date
+
+    standard log lines start with yyyy/mm/dd followed by a space
+    cherrypy log lines start with [dd/mmm/yyyy followed by a colon
+    """
+    if line.startswith('['):
+        test = line[1:].split(':', 1)
+        dateformat =  '%d/%b/%Y'
+    else:
+        test = line.split(None, 1)
+        dateformat = '%Y/%m/%d'
+    if not len(test) == 2:
+        return False
+    try:
+        date = datetime.datetime.strptime(test[0], dateformat)
+    except ValueError:
+        return False
+    return True
+
+
 def rereadlog(logfile, entries, order, timestr):
     """read the designated logfile and store in temporary database
     """
@@ -85,12 +107,26 @@ def rereadlog(logfile, entries, order, timestr):
     with (pathlib.Path(LOGROOT) / logfile).open() as _in:
         data = _in.readlines()
     if not data:
-        ## with open(fnaam + '.1') as _in:
         try:
             with (pathlib.Path(LOGROOT) / (logfile + '.1')).open() as _in:
                 data = _in.readlines()
         except FileNotFoundError:  # no prior log generation found
             pass
+    if 'error' in logfile:
+        # kijken of er tracebacks tussen zitten en die samenvoegen tot één regel
+        newdata = []
+        traceback_data = []
+        for line in data:
+            if startswith_date(line):
+                if traceback_data:
+                    newdata.append(''.join(traceback_data))
+                    traceback_data = []
+                newdata.append(line)
+            else:
+                traceback_data.append(line)
+        if traceback_data:
+            newdata.append(''.join(traceback_data))
+        data = newdata
     total = len(data)
     with closing(connect_db(timestr)) as db:
         cur = db.cursor()
@@ -186,14 +222,13 @@ def get_data(timestr, position='first'):
 def showerror(text):
     """format a line from an error log
     """
-    errortypes = ('[notice]', '[error]')
+    errortypes = ('[notice]', '[error]', '[crit]')
     client, date, data = '', '', ''
     for item in errortypes:
         if item in text:
             date, data = text.split(item)
             # add error type back to message
-            error = item[1:-1]
-            data = error + data
+            data = item + data
             break
     if not date:
         # regular cherrypy error log lines start with the date between square brackets
