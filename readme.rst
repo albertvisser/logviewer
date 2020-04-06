@@ -5,12 +5,14 @@ Originally a PHP application in an attempt to build a quick and dirty something
 to read my server logs from within my web browser,
 rebuilt in Python using various web frameworks.
 
-The Python version uses Sqlite for storing its settings
+The Python version uses SQLite for storing its settings
 and caching the currently selected logfile.
 
 
-How to use
-----------
+Usage
+-----
+
+Copy server config. Point to the chosen (local) domain after the following:
 
 Use ``cherryd`` to run ``start_logviewer.py`` with the .conf file in this
 directory.
