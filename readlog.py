@@ -230,15 +230,29 @@ def showerror(text):
             data = item + data
             break
     if not date:
-        # regular cherrypy error log lines start with the date between square brackets
+        # some error logs may start with the date between square brackets
         test = text.split('] ', 1)
         if len(test) == 2 and test[0].startswith('['):
             date, text = test
             date = date[1:]
         data = text
-    if ', client' in data:
+    if ', client' in data:  # when client is shown following the error data part
         data, client = data.split(', client')
         client = 'client' + client
+    elif '[client' in data:  # when client is shown inside the error data part
+        start, rest = data.split('[client', 1)
+        if '[client' in rest:
+            client_part_1, rest = rest.split('[client', 1)
+            client_part_2, rest = rest.split(None, 1)
+            if client_part_2[:-1] in client_part_1:
+                client_part_2 = ''
+        else:
+            client_part_1, rest = rest.split(None, 1)
+            client_part_2 = ''
+        client = 'client: ' + client_part_1
+        if client_part_2:
+            client += ' / ' + client_part_2
+        data = start + rest
     parts = {"client": client, "date": date, "data": data}
     return parts
 
