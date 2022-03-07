@@ -19,14 +19,17 @@ class Logviewer(object):
     def index(self, logfile='', entries='', order='', timestr=''):
         """load a log file and display a first page
         """
+        try:
+            test = self.timestr
+        except AttributeError:
+            self.timestr = str(int(time.time() * 10))
         if not logfile:
-            timestr = str(int(time.time() * 10))
-            init_db(timestr)
-            self.timestr = timestr
+            init_db(self.timestr)
+            # self.timestr = timestr
         else:
-            rereadlog(logfile, entries, order, timestr)
+            rereadlog(logfile, entries, order, self.timestr)
         ## return str(get_data())
-        return tmpl.render(**get_data(timestr))
+        return tmpl.render(**get_data(self.timestr))
 
     @cherrypy.expose
     def top(self):
