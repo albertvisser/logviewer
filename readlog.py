@@ -82,7 +82,6 @@ def startswith_date(line):
 def rereadlog(logfile, entries, order, timestr):
     """read the designated logfile and store in temporary database
     """
-    old_logfile, old_entries, old_order = logfile, entries, order
     with closing(connect_db(timestr)) as db:
         cur = db.cursor()
         try:
@@ -90,17 +89,17 @@ def rereadlog(logfile, entries, order, timestr):
                                'where id == 1')
         except sqlite3.OperationalError:
             init_db(timestr)
+            old_logfile, old_entries, old_order = logfile, entries, order
         else:
             for row in data:
                 old_logfile, old_entries, old_order = row
                 break
-    if logfile == old_logfile and entries == old_entries and order == old_order:
-        return
-    with closing(connect_db(timestr)) as db:
-        cur = db.cursor()
-        cur.execute('UPDATE parms SET logfile = ?, entries = ? , ordering = ? '
-                    'WHERE id == 1', (logfile, entries, order))
-        db.commit()
+        if logfile != old_logfile or entries != str(old_entries) or order != old_order:
+            with closing(connect_db(timestr)) as db:
+                cur = db.cursor()
+                cur.execute('UPDATE parms SET logfile = ?, entries = ? , ordering = ? '
+                            'WHERE id == 1', (logfile, entries, order))
+                db.commit()
     ## fnaam = os.path.join(LOGROOT, logfile)
     ## with open(fnaam) as _in:
     with (pathlib.Path(LOGROOT) / logfile).open() as _in:
