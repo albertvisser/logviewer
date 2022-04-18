@@ -11,6 +11,7 @@
  .caption-left { float: left; width:20% }
 .caption-middle { padding-left: 212px }
 .center { text-align: center }
+.message { color: red }
 .data { font-size: 8pt; background-color: #f6fafd }
  </style>
 </head>
@@ -67,7 +68,7 @@
             />&nbsp;nieuwste laatst&nbsp;
         </span>
     </div>
-    <div style="text-align: center">{{mld}}&nbsp;</div>
+    <div style="color: red"><strong>{{mld}}&nbsp;</strong></div>
     <div>
         <table>
             <tr>
