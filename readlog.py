@@ -82,6 +82,23 @@ def startswith_date(line):
 def rereadlog(logfile, entries, order, timestr):
     """read the designated logfile and store in temporary database
     """
+    read_and_set_parms(logfile, entries, order, timestr)
+    with (pathlib.Path(LOGROOT) / logfile).open() as _in:
+        data = _in.readlines()
+    if not data:
+        try:
+            with (pathlib.Path(LOGROOT) / (logfile + '.1')).open() as _in:
+                data = _in.readlines()
+        except FileNotFoundError:  # no prior log generation found
+            pass
+    if 'error' in logfile:
+        data = check_for_python_tracebacks(data)
+    update_cache(timestr, data)
+
+
+def read_and_set_parms(logfile, entries, order, timestr):
+    """get current parameters and update in database if any have changed
+    """
     with closing(connect_db(timestr)) as db:
         cur = db.cursor()
         try:
@@ -94,37 +111,35 @@ def rereadlog(logfile, entries, order, timestr):
             for row in data:
                 old_logfile, old_entries, old_order = row
                 break
-        if logfile != old_logfile or entries != str(old_entries) or order != old_order:
-            with closing(connect_db(timestr)) as db:
-                cur = db.cursor()
-                cur.execute('UPDATE parms SET logfile = ?, entries = ? , ordering = ? '
-                            'WHERE id == 1', (logfile, entries, order))
-                db.commit()
-    ## fnaam = os.path.join(LOGROOT, logfile)
-    ## with open(fnaam) as _in:
-    with (pathlib.Path(LOGROOT) / logfile).open() as _in:
-        data = _in.readlines()
-    if not data:
-        try:
-            with (pathlib.Path(LOGROOT) / (logfile + '.1')).open() as _in:
-                data = _in.readlines()
-        except FileNotFoundError:  # no prior log generation found
-            pass
-    if 'error' in logfile:
-        # kijken of er tracebacks tussen zitten en die samenvoegen tot één regel
-        newdata = []
-        traceback_data = []
-        for line in data:
-            if startswith_date(line):
-                if traceback_data:
-                    newdata.append(''.join(traceback_data))
-                    traceback_data = []
-                newdata.append(line)
-            else:
-                traceback_data.append(line)
-        if traceback_data:
-            newdata.append(''.join(traceback_data))
-        data = newdata
+    if logfile != old_logfile or entries != str(old_entries) or order != old_order:
+        with closing(connect_db(timestr)) as db:
+            cur = db.cursor()
+            cur.execute('UPDATE parms SET logfile = ?, entries = ? , ordering = ? '
+                        'WHERE id == 1', (logfile, entries, order))
+            db.commit()
+
+
+def check_for_python_tracebacks(data):
+    """kijken of er tracebacks tussen zitten en die samenvoegen tot één regel
+    """
+    newdata = []
+    traceback_data = []
+    for line in data:
+        if startswith_date(line):
+            if traceback_data:
+                newdata.append(''.join(traceback_data))
+                traceback_data = []
+            newdata.append(line)
+        else:
+            traceback_data.append(line)
+    if traceback_data:
+        newdata.append(''.join(traceback_data))
+    return newdata
+
+
+def update_cache(timestr, data):
+    """feed lines from the logfile to the database
+    """
     total = len(data)
     with closing(connect_db(timestr)) as db:
         cur = db.cursor()
@@ -198,7 +213,7 @@ def get_data(timestr, position='first'):
                 else:
                     outdict['mld'] = 'Geen volgende pagina'
             elif position == 'last':
-                current = int(total / entries) * entries + 1
+                current = (int(total / entries) - 1) * entries + 1
             cur.execute('UPDATE parms SET current = ? WHERE id == 1', (current,))
             db.commit()
 
@@ -248,9 +263,9 @@ def showerror(text):
         else:
             client_part_1, rest = rest.split(None, 1)
             client_part_2 = ''
-        client = 'client: ' + client_part_1
+        client = 'client: ' + client_part_1.strip().strip(']')
         if client_part_2:
-            client += ' / ' + client_part_2
+            client += ' / ' + client_part_2.strip().strip(']')
         data = start + rest
     parts = {"client": client, "date": date, "data": data}
     return parts
