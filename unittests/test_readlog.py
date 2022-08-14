@@ -262,6 +262,14 @@ def test_get_data(monkeypatch, capsys):
             return [['error_logfile', 10, 1, 100, 'asc', '']]
         elif counter == 3:
             return ['logline_1', 'logline_2']
+    def mock_execute_errorlog_91(self, *args):
+        nonlocal counter
+        print(*args)
+        counter += 1
+        if counter == 1:
+            return [['error_logfile', 10, 1, 91, 'asc', '']]
+        elif counter == 3:
+            return ['logline_1', 'logline_2']
     def mock_connect(*args):
         print("connecting to database identified by '{}'".format(args[0]))
         return MockConnection(*args)
@@ -309,7 +317,7 @@ def test_get_data(monkeypatch, capsys):
                                        ' mld FROM parms where id == 1\n'
                                        'UPDATE parms SET current = ? WHERE id == 1 (1,)\n'
                                        'executing commit\n'
-                                       'SELECT line FROM log WHERE id BETWEEN 1 and 10\n'
+                                       'SELECT line FROM log WHERE id BETWEEN ? and ? (1, 10)\n'
                                        'reading access log line\n'
                                        'reading access log line\n'
                                        'executing close\n')
@@ -329,7 +337,7 @@ def test_get_data(monkeypatch, capsys):
                                        ' mld FROM parms where id == 1\n'
                                        'UPDATE parms SET current = ? WHERE id == 1 (11,)\n'
                                        'executing commit\n'
-                                       'SELECT line FROM log WHERE id BETWEEN 11 and 20\n'
+                                       'SELECT line FROM log WHERE id BETWEEN ? and ? (11, 20)\n'
                                        'reading access log line\n'
                                        'reading access log line\n'
                                        'executing close\n')
@@ -349,7 +357,7 @@ def test_get_data(monkeypatch, capsys):
                                        ' mld FROM parms where id == 1\n'
                                        'UPDATE parms SET current = ? WHERE id == 1 (1,)\n'
                                        'executing commit\n'
-                                       'SELECT line FROM log WHERE id BETWEEN 1 and 10\n'
+                                       'SELECT line FROM log WHERE id BETWEEN ? and ? (1, 10)\n'
                                        'reading access log line\n'
                                        'reading access log line\n'
                                        'executing close\n')
@@ -369,7 +377,7 @@ def test_get_data(monkeypatch, capsys):
                                        ' mld FROM parms where id == 1\n'
                                        'UPDATE parms SET current = ? WHERE id == 1 (1,)\n'
                                        'executing commit\n'
-                                       'SELECT line FROM log WHERE id BETWEEN 1 and 10\n'
+                                       'SELECT line FROM log WHERE id BETWEEN ? and ? (1, 10)\n'
                                        'reading access log line\n'
                                        'reading access log line\n'
                                        'executing close\n')
@@ -389,7 +397,7 @@ def test_get_data(monkeypatch, capsys):
                                        ' mld FROM parms where id == 1\n'
                                        'UPDATE parms SET current = ? WHERE id == 1 (1,)\n'
                                        'executing commit\n'
-                                       'SELECT line FROM log WHERE id BETWEEN 1 and 10\n'
+                                       'SELECT line FROM log WHERE id BETWEEN ? and ? (1, 10)\n'
                                        'reading access log line\n'
                                        'reading access log line\n'
                                        'executing close\n')
@@ -404,13 +412,32 @@ def test_get_data(monkeypatch, capsys):
                        numentries=('5', '10', '15', '20', '25', '30'))
     actual_outdict = readlog.get_data('timestr', position='last')
     assert actual_outdict == expected_outdict
-    # TODO uitzoeken: als total = 100 dan wordt current 91, maar als het 99 is dan wordt current 81
     assert capsys.readouterr().out == ("connecting to database identified by 'timestr'\n"
                                        'SELECT logfile, entries, current, total, ordering,'
                                        ' mld FROM parms where id == 1\n'
                                        'UPDATE parms SET current = ? WHERE id == 1 (91,)\n'
                                        'executing commit\n'
-                                       'SELECT line FROM log WHERE id BETWEEN 91 and 100\n'
+                                       'SELECT line FROM log WHERE id BETWEEN ? and ? (91, 100)\n'
+                                       'reading error log line\n'
+                                       'reading error log line\n'
+                                       'executing close\n')
+    counter = 0
+    monkeypatch.setattr(MockCursor, 'execute', mock_execute_errorlog_91)
+    monkeypatch.setattr(readlog, 'connect_db', mock_connect)
+    monkeypatch.setattr(readlog.sqlite3, 'Connection', MockConnection)
+    expected_outdict = {x: y for x, y in initial_outdict.items()}
+    expected_outdict.update(entries='10', errorlog=True,
+                       logdata=[None, None] + 8 * [{'client': '', 'data': '', 'date': ''}],
+                       logfile = 'error_logfile', loglist = ['log1', 'log2'], order='asc',
+                       numentries=('5', '10', '15', '20', '25', '30'))
+    actual_outdict = readlog.get_data('timestr', position='last')
+    assert actual_outdict == expected_outdict
+    assert capsys.readouterr().out == ("connecting to database identified by 'timestr'\n"
+                                       'SELECT logfile, entries, current, total, ordering,'
+                                       ' mld FROM parms where id == 1\n'
+                                       'UPDATE parms SET current = ? WHERE id == 1 (91,)\n'
+                                       'executing commit\n'
+                                       'SELECT line FROM log WHERE id BETWEEN ? and ? (91, 100)\n'
                                        'reading error log line\n'
                                        'reading error log line\n'
                                        'executing close\n')

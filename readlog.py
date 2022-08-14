@@ -213,13 +213,15 @@ def get_data(timestr, position='first'):
                 else:
                     outdict['mld'] = 'Geen volgende pagina'
             elif position == 'last':
-                current = (int(total / entries) - 1) * entries + 1
+                current = (int(total / entries)) * entries + 1
+                if total % entries == 0:
+                    current -= entries
             cur.execute('UPDATE parms SET current = ? WHERE id == 1', (current,))
             db.commit()
 
             if logfile:
-                lines = cur.execute('SELECT line FROM log WHERE id BETWEEN {} '
-                                    'and {}'.format(current, current + entries - 1))
+                lines = cur.execute('SELECT line FROM log WHERE id BETWEEN ? and ?',
+                                    (current, current + entries - 1))
                 for line in lines:
                     if is_errorlog:
                         parts = showerror(line[0])
