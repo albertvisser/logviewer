@@ -1,0 +1,14 @@
+[testdir]
+unittests
+
+[testscripts]
+read: test_readlog.py
+view: test_viewlogs_cherry.py
+#viewb: test_viewlogs_bottle.py
+#viewf: test_viewlogs_flask.py
+
+[testees]
+read: readlog.py
+view: viewlogs_cherry.py
+#viewb: viewlogs_bottle.py
+#viewf: viewlogs_flask.py
