@@ -67,7 +67,7 @@ def test_startswith_date(monkeypatch, capsys):
     assert readlog.startswith_date('[10/Mar/2022:more data') is True
 
 
-def test_rereadlog(monkeypatch, capsys):
+def test_rereadlog(monkeypatch, capsys, tmp_path):
     def mock_read_parms(*args):
         print('called read_and_set_parms with args', args)
     monkeypatch.setattr(readlog, 'read_and_set_parms', mock_read_parms)
@@ -78,26 +78,20 @@ def test_rereadlog(monkeypatch, capsys):
     def mock_update_cache(*args):
         print('called update_cache with args', args)
     monkeypatch.setattr(readlog, 'update_cache', mock_update_cache)
-
-    monkeypatch.setattr(readlog, 'LOGROOT', '/tmp/test_readlog')
-    try:
-        os.mkdir('/tmp/test_readlog')
-    except FileExistsError:
-        pass
+    testlogroot = tmp_path / 'test_readlog'
+    testlogroot.mkdir()
+    monkeypatch.setattr(readlog, 'LOGROOT', str(testlogroot))
 
     # test: read access log
-    with open('/tmp/test_readlog/logfile', 'w') as f:
-        f.write('logline_1\nlogline_2\n')
+    (testlogroot / 'logfile').write_text('logline_1\nlogline_2\n')
     readlog.rereadlog('logfile', '5', 'A', 'timestr')
     assert capsys.readouterr().out == ("called read_and_set_parms with args ('logfile', '5', 'A',"
                                        " 'timestr')\n"
                                        "called update_cache with args ('timestr', ['logline_1\\n',"
                                        " 'logline_2\\n'])\n")
     # test: read error log from backup
-    with open('/tmp/test_readlog/errorlogfile', 'w') as f:
-        f.write('')
-    with open('/tmp/test_readlog/errorlogfile.1', 'w') as f:
-        f.write('logline_1\nlogline_2\n')
+    (testlogroot / 'errorlogfile').touch()
+    (testlogroot / 'errorlogfile.1').write_text('logline_1\nlogline_2\n')
     readlog.rereadlog('errorlogfile', '5', 'A', 'timestr')
     assert capsys.readouterr().out == ("called read_and_set_parms with args ('errorlogfile', '5', 'A',"
                                        " 'timestr')\n"
@@ -106,8 +100,7 @@ def test_rereadlog(monkeypatch, capsys):
                                        "called update_cache with args ('timestr', ['logline_1\\n',"
                                        " 'logline_2\\n'])\n")
     # test: read access log gives no data, no backup log
-    with open('/tmp/test_readlog/logfile', 'w') as f:
-        f.write('')
+    (testlogroot / 'logfile').write_text('')
     readlog.rereadlog('logfile', '5', 'A', 'timestr')
     assert capsys.readouterr().out == ("called read_and_set_parms with args ('logfile', '5', 'A',"
                                        " 'timestr')\n"
