@@ -1,11 +1,9 @@
-import pytest
-
 import viewlogs_cherry as viewlogs
 
 class MockTemplate:
     # @staticmethod
     def render(**kwargs):
-        return 'call render for {}'.format(kwargs)
+        return f'call render with kwargs {kwargs}'
 
 
 def mock_get_data(*args):
@@ -23,11 +21,11 @@ def test_index(monkeypatch, capsys):
     monkeypatch.setattr(viewlogs, 'init_db', mock_init)
     monkeypatch.setattr(viewlogs, 'rereadlog', mock_reread)
     testobj = viewlogs.Logviewer()
-    assert testobj.index('', '1', 'asc', 'timestr') == "call render for {'0': '11'}"
+    assert testobj.index('', '1', 'asc', 'timestr') == "call render with kwargs {'0': '11'}"
     assert capsys.readouterr().out == "called init_db with args ('11',)\n"
     testobj = viewlogs.Logviewer()
     testobj.timestr = 'hallo'
-    assert testobj.index('logfile', '1', 'asc', 'timestr') == "call render for {'0': 'hallo'}"
+    assert testobj.index('logfile', '1', 'asc', 'timestr') == "call render with kwargs {'0': 'hallo'}"
     assert capsys.readouterr().out == "called rereadlog with args ('logfile', '1', 'asc', 'hallo')\n"
 
 
@@ -36,7 +34,7 @@ def test_top(monkeypatch, capsys):
     monkeypatch.setattr(viewlogs, 'get_data', mock_get_data)
     testobj = viewlogs.Logviewer()
     testobj.timestr = 'hallo'
-    assert testobj.top() == "call render for {'0': 'hallo', '1': 'first'}"
+    assert testobj.top() == "call render with kwargs {'0': 'hallo', '1': 'first'}"
 
 
 def test_next(monkeypatch, capsys):
@@ -44,7 +42,7 @@ def test_next(monkeypatch, capsys):
     monkeypatch.setattr(viewlogs, 'get_data', mock_get_data)
     testobj = viewlogs.Logviewer()
     testobj.timestr = 'hallo'
-    assert testobj.next() == "call render for {'0': 'hallo', '1': 'next'}"
+    assert testobj.next() == "call render with kwargs {'0': 'hallo', '1': 'next'}"
 
 
 def test_prev(monkeypatch, capsys):
@@ -52,7 +50,7 @@ def test_prev(monkeypatch, capsys):
     monkeypatch.setattr(viewlogs, 'get_data', mock_get_data)
     testobj = viewlogs.Logviewer()
     testobj.timestr = 'hallo'
-    assert testobj.prev() == "call render for {'0': 'hallo', '1': 'prev'}"
+    assert testobj.prev() == "call render with kwargs {'0': 'hallo', '1': 'prev'}"
 
 
 def test_bottom(monkeypatch, capsys):
@@ -60,7 +58,7 @@ def test_bottom(monkeypatch, capsys):
     monkeypatch.setattr(viewlogs, 'get_data', mock_get_data)
     testobj = viewlogs.Logviewer()
     testobj.timestr = 'hallo'
-    assert testobj.bottom() == "call render for {'0': 'hallo', '1': 'last'}"
+    assert testobj.bottom() == "call render with kwargs {'0': 'hallo', '1': 'last'}"
 
 
 # module level code testen gaat waarschijnlijk toch op een andere manier - hoeft misschien ook niet?

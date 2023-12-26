@@ -1,11 +1,9 @@
-import pytest
-
 import viewlogs_cherry as viewlogs
 
 class MockTemplate:
     # @staticmethod
     def render(**kwargs):
-        return 'call render for {}'.format(kwargs)
+        return f'call render with kwargs {kwargs}'
 
 
 def mock_get_data(*args):

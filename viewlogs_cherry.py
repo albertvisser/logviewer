@@ -12,16 +12,17 @@ env = Environment(loader=FileSystemLoader('templates'))
 tmpl = env.get_template('viewlogs.html')
 
 
-class Logviewer(object):
+class Logviewer:
     """Application class
     """
     @cherrypy.expose
     def index(self, logfile='', entries='', order='', timestr=''):
         """load a log file and display a first page
         """
-        try:
-            test = self.timestr
-        except AttributeError:
+        if not hasattr(self, 'timestr'):
+        # try:
+        #     test = self.timestr
+        # except AttributeError:
             self.timestr = str(int(time.time() * 10))
         if not logfile:
             init_db(self.timestr)

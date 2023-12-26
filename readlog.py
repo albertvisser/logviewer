@@ -20,6 +20,7 @@ responses.update({444: 'No Response From Server',
                   496: 'SSL Certificate Required',
                   497: 'HTTP Request Sent to HTTPS Port',
                   499: 'Client Closed Request'})
+TWO_ITEMS = len(['two', 'values'])
 
 
 def listlogs():
@@ -70,10 +71,10 @@ def startswith_date(line):
     else:
         test = line.split(None, 1)
         dateformat = '%Y/%m/%d'
-    if not len(test) == 2:
+    if len(test) != TWO_ITEMS:
         return False
     try:
-        date = datetime.datetime.strptime(test[0], dateformat)
+        datetime.datetime.strptime(test[0], dateformat)
     except ValueError:
         return False
     return True
@@ -161,8 +162,7 @@ def update_cache(timestr, data):
             check = item[0]
             break
         if check != total:
-            raise ValueError('Waarom dit verschil tussen {} and {}?'.format(total,
-                                                                            check))
+            raise ValueError(f'Waarom dit verschil tussen {total} and {check}?')
         else:
             cur.execute('UPDATE parms SET total = ? WHERE id == 1', (total,))
             db.commit()
@@ -192,7 +192,7 @@ def get_data(timestr, position='first'):
             for row in data:
                 logfile, entries, current, total, order, mld = row
                 break
-            is_errorlog = True if 'error' in logfile else False
+            is_errorlog = 'error' in logfile
             outdict['logfile'] = logfile
             outdict['order'] = order
             outdict['errorlog'] = is_errorlog
@@ -223,10 +223,7 @@ def get_data(timestr, position='first'):
                 lines = cur.execute('SELECT line FROM log WHERE id BETWEEN ? and ?',
                                     (current, current + entries - 1))
                 for line in lines:
-                    if is_errorlog:
-                        parts = showerror(line[0])
-                    else:
-                        parts = showaccess(line[0])
+                    parts = showerror(line[0]) if is_errorlog else showaccess(line[0])
                     outdict['logdata'].append(parts)
             start = len(outdict['logdata'])
             for i in range(start, entries):
@@ -248,7 +245,7 @@ def showerror(text):
     if not date:
         # some error logs may start with the date between square brackets
         test = text.split('] ', 1)
-        if len(test) == 2 and test[0].startswith('['):
+        if len(test) == TWO_ITEMS and test[0].startswith('['):
             date, text = test
             date = date[1:]
         data = text
@@ -279,17 +276,17 @@ def showaccess(text):
     parts = {'client': '', 'date': '', 'data': ''}
     parsed = text.split(' -', 2)    # client, date, data
     parts['client'] = parsed[0]
-    if len(parsed) < 2:
+    if len(parsed) < TWO_ITEMS:
         return parts
     parsed = parsed[-1].split(' [', 1)  # strip off opening bracket for date
-    if len(parsed) < 2:
+    if len(parsed) < TWO_ITEMS:
         return parts
     parsed = parsed[1].split('] "', 1)  # date, data
     parts['date'] = parsed[0]
-    if len(parsed) < 2:
+    if len(parsed) < TWO_ITEMS:
         return parts
     parsed = parsed[1].split('" ', 1)
-    if len(parsed) < 2:
+    if len(parsed) < TWO_ITEMS:
         return parts
     command = parsed[0]  # verb address protocol = command.split()
     parsed = parsed[1].split(' ', 1)
@@ -297,5 +294,5 @@ def showaccess(text):
         text = responses[int(parsed[0])]
     except KeyError:
         text = 'unknown status'
-    parts['data'] = '{} {}: {}'.format(parsed[0], text, command)
+    parts['data'] = f'{parsed[0]} {text}: {command}'
     return parts

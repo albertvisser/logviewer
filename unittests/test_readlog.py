@@ -1,4 +1,4 @@
-import os
+# import os
 import types
 import pytest
 import readlog
@@ -8,7 +8,7 @@ def test_listlogs(monkeypatch, capsys):
     def mock_stat(self, *args):
         nonlocal counter
         counter += 1
-        return types.SimpleNamespace(st_ctime='changetime{}'.format(counter))
+        return types.SimpleNamespace(st_ctime='changetime{counter}')
     monkeypatch.setattr(readlog.pathlib.Path, 'iterdir', lambda x: [readlog.pathlib.Path('log1.log'),
                                                                     readlog.pathlib.Path('geen-log'),
                                                                     readlog.pathlib.Path('log2.log')])
@@ -38,7 +38,7 @@ class MockConnection(readlog.sqlite3.Connection):
 
 def test_init_db(monkeypatch, capsys):
     def mock_connect(*args):
-        print("connecting to database identified by '{}'".format(args[0]))
+        print(f"connecting to database identified by '{args[0]}'")
         return MockConnection(*args)
     monkeypatch.setattr(readlog, 'connect_db', mock_connect)
     monkeypatch.setattr(readlog.sqlite3, 'Connection', MockConnection)
@@ -72,7 +72,7 @@ def test_rereadlog(monkeypatch, capsys, tmp_path):
         print('called read_and_set_parms with args', args)
     monkeypatch.setattr(readlog, 'read_and_set_parms', mock_read_parms)
     def mock_check(lines):
-        print('called check_for_python_tracebacks with arg `{}`'.format(lines))
+        print(f'called check_for_python_tracebacks with arg `{lines}`')
         return lines
     monkeypatch.setattr(readlog, 'check_for_python_tracebacks', mock_check)
     def mock_update_cache(*args):
@@ -117,7 +117,7 @@ def test_read_and_set_parms(monkeypatch, capsys):
         if counter == 1:
             return [['logfile', 11, 'asc']]
     def mock_connect(*args):
-        print("connecting to database identified by '{}'".format(args[0]))
+        print(f"connecting to database identified by '{args[0]}'")
         return MockConnection(*args)
     def mock_init(*args):
         print('called init_db')
@@ -175,7 +175,7 @@ def test_update_cache(monkeypatch, capsys):
         elif counter == 6:
             return [[3]]
     def mock_connect(*args):
-        print("connecting to database identified by '{}'".format(args[0]))
+        print(f"connecting to database identified by '{args[0]}'")
         return MockConnection(*args)
     def mock_init(*args):
         print('called init_db')
@@ -264,7 +264,7 @@ def test_get_data(monkeypatch, capsys):
         elif counter == 3:
             return ['logline_1', 'logline_2']
     def mock_connect(*args):
-        print("connecting to database identified by '{}'".format(args[0]))
+        print(f"connecting to database identified by '{args[0]}'")
         return MockConnection(*args)
     def mock_init(*args):
         print('called init_db')

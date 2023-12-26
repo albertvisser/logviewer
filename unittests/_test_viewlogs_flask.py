@@ -1,5 +1,3 @@
-import pytest
-
 import viewlogs_flask as viewlogs
 
 
@@ -10,7 +8,7 @@ def mock_get_data(*args):
     return {str(x): y for x, y in enumerate(args)}
 
 def mock_render(*args):
-    return 'call render_template for {}'.format(*args)
+    return f'call render_template with args {args}'
 
 def test_logviewer(monkeypatch, capsys):
     def mock_init(*args):
@@ -21,7 +19,6 @@ def test_logviewer(monkeypatch, capsys):
     monkeypatch.setattr(viewlogs, 'init_db', mock_init)
     monkeypatch.setattr(viewlogs, 'rereadlog', mock_reread)
     monkeypatch.setattr(viewlogs, 'timestr', 'hallo')
-    counter = 0
     monkeypatch.setattr(viewlogs, 'request', MockRequest)
     monkeypatch.setattr(viewlogs.request, 'args', {'logfile': 'logfile', 'entries': 1,
                                                    'order': 'asc'})
