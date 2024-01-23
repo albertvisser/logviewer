@@ -1,3 +1,5 @@
+"""unittests for ./readlog.py
+"""
 # import os
 import types
 import pytest
@@ -5,39 +7,61 @@ import readlog
 
 
 def test_listlogs(monkeypatch, capsys):
+    """unittest for readlog.listlogs
+    """
     def mock_stat(self, *args):
+        """stub
+        """
         nonlocal counter
         counter += 1
         return types.SimpleNamespace(st_ctime='changetime{counter}')
     monkeypatch.setattr(readlog.pathlib.Path, 'iterdir', lambda x: [readlog.pathlib.Path('log1.log'),
                                                                     readlog.pathlib.Path('geen-log'),
                                                                     readlog.pathlib.Path('log2.log')])
-    monkeypatch.setattr(readlog.pathlib.Path, 'stat',mock_stat)
+    monkeypatch.setattr(readlog.pathlib.Path, 'stat', mock_stat)
     counter = 0
     assert readlog.listlogs() == ['log2.log', 'log1.log']
 
 
 def test_connect_db(monkeypatch, capsys):
+    """unittest for readlog.connect_db
+    """
     monkeypatch.setattr(readlog.sqlite3, 'connect', lambda x: x)
     assert readlog.connect_db('xxx') == '/tmp/loglines_xxx.db'
 
 
 class MockCursor(readlog.sqlite3.Cursor):
+    """stub for sqlite3.Cursor
+    """
     def execute(self, *args):
+        """stub
+        """
         print('executing', *args)
 
 
 class MockConnection(readlog.sqlite3.Connection):
+    """stub for sqlite3.Connection
+    """
     def cursor(self, *args, **kwargs):
+        """stub
+        """
         return MockCursor(self, *args, **kwargs)
     def commit(self, *args):
+        """stub
+        """
         print('executing commit')
     def close(self, *args):
+        """stub
+        """
         print('executing close')
 
 
 def test_init_db(monkeypatch, capsys):
+    """unittest for readlog.init_db
+    """
     def mock_connect(*args):
+        """stub
+        """
         print(f"connecting to database identified by '{args[0]}'")
         return MockConnection(*args)
     monkeypatch.setattr(readlog, 'connect_db', mock_connect)
@@ -57,6 +81,8 @@ def test_init_db(monkeypatch, capsys):
 
 
 def test_startswith_date(monkeypatch, capsys):
+    """unittest for readlog.startswith_date
+    """
     assert readlog.startswith_date('bladibla') is False
     assert readlog.startswith_date('bla dibla') is False
     assert readlog.startswith_date('[bladibla') is False
@@ -68,14 +94,22 @@ def test_startswith_date(monkeypatch, capsys):
 
 
 def test_rereadlog(monkeypatch, capsys, tmp_path):
+    """unittest for readlog.rereadlog
+    """
     def mock_read_parms(*args):
+        """stub
+        """
         print('called read_and_set_parms with args', args)
     monkeypatch.setattr(readlog, 'read_and_set_parms', mock_read_parms)
     def mock_check(lines):
+        """stub
+        """
         print(f'called check_for_python_tracebacks with arg `{lines}`')
         return lines
     monkeypatch.setattr(readlog, 'check_for_python_tracebacks', mock_check)
     def mock_update_cache(*args):
+        """stub
+        """
         print('called update_cache with args', args)
     monkeypatch.setattr(readlog, 'update_cache', mock_update_cache)
     testlogroot = tmp_path / 'test_readlog'
@@ -108,18 +142,29 @@ def test_rereadlog(monkeypatch, capsys, tmp_path):
 
 
 def test_read_and_set_parms(monkeypatch, capsys):
+    """unittest for readlog.read_and_set_parms
+    """
     def mock_execute_raises(*args):
+        """stub
+        """
         raise readlog.sqlite3.OperationalError
     def mock_execute(self, *args):
+        """stub
+        """
         nonlocal counter
         print(*args)
         counter += 1
         if counter == 1:
             return [['logfile', 11, 'asc']]
+        return []
     def mock_connect(*args):
+        """stub
+        """
         print(f"connecting to database identified by '{args[0]}'")
         return MockConnection(*args)
     def mock_init(*args):
+        """stub
+        """
         print('called init_db')
     counter = 0
     monkeypatch.setattr(MockCursor, 'execute', mock_execute_raises)
@@ -145,8 +190,12 @@ def test_read_and_set_parms(monkeypatch, capsys):
                                        'executing close\n')
 
 
-def test_check_for_python_tracebacks(monkeypatch, capsys):
+def test_check_for_python_tracebacks(monkeypatch):
+    """unittest for readlog.check_for_python_tracebacks
+    """
     def mock_startswith_date(line):
+        """stub
+        """
         return line.startswith('l')
     monkeypatch.setattr(readlog, 'startswith_date', mock_startswith_date)
     assert readlog.check_for_python_tracebacks(
@@ -158,26 +207,38 @@ def test_check_for_python_tracebacks(monkeypatch, capsys):
 
 
 def test_update_cache(monkeypatch, capsys):
+    """unittest for readlog.update_cache
+    """
     def mock_execute(self, *args):
+        """stub
+        """
         nonlocal counter
         print(*args)
         counter += 1
         if counter == 1:
             return [['asc']]
-        elif counter == 6:
+        if counter == 6:
             return [[2]]
+        return []
     def mock_execute_diff(self, *args):
+        """stub
+        """
         nonlocal counter
         print(*args)
         counter += 1
         if counter == 1:
             return [['desc']]
-        elif counter == 6:
+        if counter == 6:
             return [[3]]
+        return []
     def mock_connect(*args):
+        """stub
+        """
         print(f"connecting to database identified by '{args[0]}'")
         return MockConnection(*args)
     def mock_init(*args):
+        """stub
+        """
         print('called init_db')
     counter = 0
     monkeypatch.setattr(MockCursor, 'execute', mock_execute)
@@ -221,56 +282,83 @@ def test_update_cache(monkeypatch, capsys):
 
 
 def test_get_data(monkeypatch, capsys):
+    """unittest for readlog.get_data
+    """
     def mock_execute_raises(*args):
+        """stub
+        """
         raise readlog.sqlite3.OperationalError
     def mock_execute(self, *args):
+        """stub
+        """
         nonlocal counter
         print(*args)
         counter += 1
         if counter == 1:
             return [['logfile', 10, 1, 100, 'asc', '']]
-        elif counter == 3:
+        if counter == 3:
             return ['logline_1', 'logline_2']
+        return []
     def mock_execute_next(self, *args):
+        """stub
+        """
         nonlocal counter
         print(*args)
         counter += 1
         if counter == 1:
             return [['logfile', 10, 1, 10, 'asc', '']]
-        elif counter == 3:
+        if counter == 3:
             return ['logline_1', 'logline_2']
+        return []
     def mock_execute_prev(self, *args):
+        """stub
+        """
         nonlocal counter
         print(*args)
         counter += 1
         if counter == 1:
             return [['logfile', 10, 11, 100, 'asc', '']]
-        elif counter == 3:
+        if counter == 3:
             return ['logline_1', 'logline_2']
+        return []
     def mock_execute_errorlog(self, *args):
+        """stub
+        """
         nonlocal counter
         print(*args)
         counter += 1
         if counter == 1:
             return [['error_logfile', 10, 1, 100, 'asc', '']]
-        elif counter == 3:
+        if counter == 3:
             return ['logline_1', 'logline_2']
+        return []
     def mock_execute_errorlog_91(self, *args):
+        """stub
+        """
         nonlocal counter
         print(*args)
         counter += 1
         if counter == 1:
             return [['error_logfile', 10, 1, 91, 'asc', '']]
-        elif counter == 3:
+        if counter == 3:
             return ['logline_1', 'logline_2']
+        return []
     def mock_connect(*args):
+        """stub
+        """
         print(f"connecting to database identified by '{args[0]}'")
         return MockConnection(*args)
     def mock_init(*args):
+        """stub
+        """
         print('called init_db')
     def mock_showerror(*args):
+        """stub
+        """
         print('reading error log line')
     def mock_showaccess(*args):
+        """stub
+        """
         print('reading access log line')
     monkeypatch.setattr(readlog, 'listlogs', lambda: ['log1', 'log2'])
     initial_outdict = {'loglist': ['log1', 'log2'],
@@ -301,7 +389,7 @@ def test_get_data(monkeypatch, capsys):
     expected_outdict = {x: y for x, y in initial_outdict.items()}
     expected_outdict.update(entries='10',
                        logdata=[None, None] + 8 * [{'client': '', 'data': '', 'date': ''}],
-                       logfile = 'logfile', loglist = ['log1', 'log2'], order='asc',
+                       logfile='logfile', loglist=['log1', 'log2'], order='asc',
                        numentries=('5', '10', '15', '20', '25', '30'))
     actual_outdict = readlog.get_data('timestr')
     assert actual_outdict == expected_outdict
@@ -321,7 +409,7 @@ def test_get_data(monkeypatch, capsys):
     expected_outdict = {x: y for x, y in initial_outdict.items()}
     expected_outdict.update(entries='10',
                        logdata=[None, None] + 8 * [{'client': '', 'data': '', 'date': ''}],
-                       logfile = 'logfile', loglist = ['log1', 'log2'], order='asc',
+                       logfile='logfile', loglist=['log1', 'log2'], order='asc',
                        numentries=('5', '10', '15', '20', '25', '30'))
     actual_outdict = readlog.get_data('timestr', position='next')
     assert actual_outdict == expected_outdict
@@ -339,9 +427,9 @@ def test_get_data(monkeypatch, capsys):
     monkeypatch.setattr(readlog, 'connect_db', mock_connect)
     monkeypatch.setattr(readlog.sqlite3, 'Connection', MockConnection)
     expected_outdict = {x: y for x, y in initial_outdict.items()}
-    expected_outdict.update(entries='10',  mld='Geen volgende pagina',
+    expected_outdict.update(entries='10', mld='Geen volgende pagina',
                        logdata=[None, None] + 8 * [{'client': '', 'data': '', 'date': ''}],
-                       logfile = 'logfile', loglist = ['log1', 'log2'], order='asc',
+                       logfile='logfile', loglist=['log1', 'log2'], order='asc',
                        numentries=('5', '10', '15', '20', '25', '30'))
     actual_outdict = readlog.get_data('timestr', position='next')
     assert actual_outdict == expected_outdict
@@ -361,7 +449,7 @@ def test_get_data(monkeypatch, capsys):
     expected_outdict = {x: y for x, y in initial_outdict.items()}
     expected_outdict.update(entries='10',
                        logdata=[None, None] + 8 * [{'client': '', 'data': '', 'date': ''}],
-                       logfile = 'logfile', loglist = ['log1', 'log2'], order='asc',
+                       logfile='logfile', loglist=['log1', 'log2'], order='asc',
                        numentries=('5', '10', '15', '20', '25', '30'))
     actual_outdict = readlog.get_data('timestr', position='prev')
     assert actual_outdict == expected_outdict
@@ -381,7 +469,7 @@ def test_get_data(monkeypatch, capsys):
     expected_outdict = {x: y for x, y in initial_outdict.items()}
     expected_outdict.update(entries='10', mld='Geen vorige pagina',
                        logdata=[None, None] + 8 * [{'client': '', 'data': '', 'date': ''}],
-                       logfile = 'logfile', loglist = ['log1', 'log2'], order='asc',
+                       logfile='logfile', loglist=['log1', 'log2'], order='asc',
                        numentries=('5', '10', '15', '20', '25', '30'))
     actual_outdict = readlog.get_data('timestr', position='prev')
     assert actual_outdict == expected_outdict
@@ -401,7 +489,7 @@ def test_get_data(monkeypatch, capsys):
     expected_outdict = {x: y for x, y in initial_outdict.items()}
     expected_outdict.update(entries='10', errorlog=True,
                        logdata=[None, None] + 8 * [{'client': '', 'data': '', 'date': ''}],
-                       logfile = 'error_logfile', loglist = ['log1', 'log2'], order='asc',
+                       logfile='error_logfile', loglist=['log1', 'log2'], order='asc',
                        numentries=('5', '10', '15', '20', '25', '30'))
     actual_outdict = readlog.get_data('timestr', position='last')
     assert actual_outdict == expected_outdict
@@ -421,7 +509,7 @@ def test_get_data(monkeypatch, capsys):
     expected_outdict = {x: y for x, y in initial_outdict.items()}
     expected_outdict.update(entries='10', errorlog=True,
                        logdata=[None, None] + 8 * [{'client': '', 'data': '', 'date': ''}],
-                       logfile = 'error_logfile', loglist = ['log1', 'log2'], order='asc',
+                       logfile='error_logfile', loglist=['log1', 'log2'], order='asc',
                        numentries=('5', '10', '15', '20', '25', '30'))
     actual_outdict = readlog.get_data('timestr', position='last')
     assert actual_outdict == expected_outdict
@@ -437,6 +525,8 @@ def test_get_data(monkeypatch, capsys):
 
 
 def test_showerror(monkeypatch, capsys):
+    """unittest for readlog.showerror
+    """
     assert readlog.showerror('x') == {'client': '', 'date': '', 'data': 'x'}
     assert readlog.showerror('x[otice]y') == {'client': '', 'date': '', 'data': 'x[otice]y'}
     assert readlog.showerror('x[notice]y') == {'client': '', 'date': 'x', 'data': '[notice]y'}
@@ -453,6 +543,8 @@ def test_showerror(monkeypatch, capsys):
 
 
 def test_showaccess(monkeypatch, capsys):
+    """unittest for readlog.showaccess
+    """
     assert readlog.showaccess('x') == {'client': 'x', 'date': '', 'data': ''}
     assert readlog.showaccess('x -y') == {'client': 'x', 'date': '', 'data': ''}
     assert readlog.showaccess('x - [y') == {'client': 'x', 'date': 'y', 'data': ''}
