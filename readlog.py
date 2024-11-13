@@ -6,10 +6,10 @@ import pathlib
 import datetime
 import sqlite3
 from contextlib import closing
-try:
-    from http.client import responses
-except ImportError:
-    from httplib import responses
+# try:
+from http.client import responses
+# except ImportError:
+#     from httplib import responses
 
 LOGROOT = '/var/log/nginx'
 DATABASE = '/tmp/loglines_{}.db'
@@ -67,7 +67,7 @@ def startswith_date(line):
     """
     if line.startswith('['):
         test = line[1:].split(':', 1)
-        dateformat =  '%d/%b/%Y'
+        dateformat = '%d/%b/%Y'
     else:
         test = line.split(None, 1)
         dateformat = '%Y/%m/%d'
@@ -112,6 +112,8 @@ def read_and_set_parms(logfile, entries, order, timestr):
             for row in data:
                 old_logfile, old_entries, old_order = row
                 break
+            else:
+                old_logfile, old_entries, old_order = ['', '', '']
     if logfile != old_logfile or entries != str(old_entries) or order != old_order:
         with closing(connect_db(timestr)) as db:
             cur = db.cursor()
@@ -148,6 +150,8 @@ def update_cache(timestr, data):
         for row in parms:
             order = row[0]
             break
+        else:
+            order = 'asc'
         cur.execute('DROP TABLE IF EXISTS log;')
         cur.execute('CREATE TABLE log (id INTEGER PRIMARY KEY, '
                     'line varchar(1000) NOT NULL);')
@@ -161,11 +165,12 @@ def update_cache(timestr, data):
         for item in check:
             check = item[0]
             break
+        else:
+            check = 0
         if check != total:
             raise ValueError(f'Waarom dit verschil tussen {total} and {check}?')
-        else:
-            cur.execute('UPDATE parms SET total = ? WHERE id == 1', (total,))
-            db.commit()
+        cur.execute('UPDATE parms SET total = ? WHERE id == 1', (total,))
+        db.commit()
 
 
 def get_data(timestr, position='first'):
@@ -192,6 +197,8 @@ def get_data(timestr, position='first'):
             for row in data:
                 logfile, entries, current, total, order, mld = row
                 break
+            else:
+                logfile, entries, current, total, order, mld = '', 0, 0, 0, '', ''
             is_errorlog = 'error' in logfile
             outdict['logfile'] = logfile
             outdict['order'] = order
@@ -212,7 +219,7 @@ def get_data(timestr, position='first'):
                     current = newtop
                 else:
                     outdict['mld'] = 'Geen volgende pagina'
-            elif position == 'last':
+            else:  # if position == 'last':
                 current = (int(total / entries)) * entries + 1
                 if total % entries == 0:
                     current -= entries

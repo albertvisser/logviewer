@@ -2,10 +2,11 @@
 """
 import viewlogs_cherry as viewlogs
 
+
 class MockTemplate:
     """stub for template loader
     """
-    # @staticmethod
+    @staticmethod
     def render(**kwargs):
         """stub
         """
